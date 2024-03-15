@@ -1,17 +1,22 @@
 // ==UserScript==
-// @name         Ehentai画廊收藏助手
-// @namespace    https://github.com/cpuopt/Ehentai-gallery-script
+// @name         Ehentai画廊收藏助手(EX)
+// @namespace    https://github.com/robling/Ehentai-gallery-script
 // @version      1.0.7
 // @description  e-hentai和exhentai画廊页面直接管理收藏和种子下载
-// @author       cpufan
+// @author       cpufan + self maintain
 // @include      https://exhentai.org/g/*/*
 // @include      https://e-hentai.org/g/*/*
-// @homepage     https://github.com/cpuopt/Ehentai-gallery-script
-// @updateURL    https://github.com/cpuopt/Ehentai-gallery-script/raw/main/Ehentai-gallery-script.user.js
-// @downloadURL  https://github.com/cpuopt/Ehentai-gallery-script/raw/main/Ehentai-gallery-script.user.js
+// @homepage     https://github.com/robling/Ehentai-gallery-script
+// @updateURL    https://github.com/robling/Ehentai-gallery-script/raw/main/Ehentai-gallery-script.user.js
+// @downloadURL  https://github.com/robling/Ehentai-gallery-script/raw/main/Ehentai-gallery-script.user.js
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
 // @grant        GM_info
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM.setValue
+// @grant        GM.getValue
+// @grant        GM_setClipboard
 // @connect      e-hentai.org
 // @connect      exhentai.org
 // @license      MIT
@@ -280,34 +285,40 @@ div#gd6 {
                         Efilename.style.textAlign = "left";
                         panel.appendChild(Efilename);
 
-                        let Etorrent = document.createElement("input");
-                        Etorrent.style = "margin-bottom: 2px;";
-                        Etorrent.type = "button";
-                        Etorrent.value = "复制磁力链";
-                        Etorrent.data = torrent;
-                        Etorrent.onclick = () => {
-                            const el = document.createElement("textarea");
-                            el.value = torrent;
-                            document.body.appendChild(el);
-                            el.select();
-                            document.execCommand("copy");
-                            document.body.removeChild(el);
-                        };
-                        panel.appendChild(Etorrent);
+                        let get_torrent_saved = function(){
+                            let v = GM_getValue("ex_magnets", null);
+                            if (v == null) return 0;
+                            return v.split('\n').length;
+                        }
+                        let Storrent = document.createElement("input"); // 保存
 
-                        let Edownload = document.createElement("input");
-                        Edownload.style = "margin-bottom: 2px;";
-                        Edownload.type = "button";
-                        Edownload.value = "下载Torrent";
-                        Edownload.setAttribute("onclick", download);
-                        panel.appendChild(Edownload);
+                        let Ctorrent = document.createElement("input"); // 复制
 
-                        let Gdownload = document.createElement("input");
-                        Gdownload.style = "margin-bottom: 2px;";
-                        Gdownload.type = "button";
-                        Gdownload.value = "下载公共Torrent";
-                        Gdownload.setAttribute("onclick", `document.location='${download_href}'; return false`);
-                        panel.appendChild(Gdownload);
+                        Storrent.style = "margin-bottom: 2px;";
+                        Storrent.type = "button";
+                        Storrent.value = "保存磁力链";
+                        Storrent.data = torrent;
+                        Storrent.addEventListener('click', async function () {
+                            let v = GM_getValue("ex_magnets", null);
+                            if (v == null)  v = '';
+                            else            v += "\n";
+                            v += torrent;
+                            console.log(v);
+                            GM_setValue("ex_magnets", v);
+                            Ctorrent.value = "复制所有磁力链接(" + get_torrent_saved() + ")";
+                        });
+                        panel.appendChild(Storrent);
+
+                        Ctorrent.style = "margin-bottom: 2px;";
+                        Ctorrent.type = "button";
+                        Ctorrent.value = "复制所有磁力链接(" + get_torrent_saved() + ")";
+                        Ctorrent.addEventListener('click', async function () {
+                            let magnets = GM_getValue("ex_magnets", null);
+                            GM_setClipboard(magnets);
+                            GM_setValue("ex_magnets", null);
+                            Ctorrent.value = "复制所有磁力链接(" + get_torrent_saved() + ")";
+                        });
+                        panel.appendChild(Ctorrent);
                     }
                 },
             });
